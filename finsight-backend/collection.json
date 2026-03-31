@@ -1,0 +1,102 @@
+{
+  "info": {
+    "name": "Finsight API - Events Testing",
+    "description": "API collection for testing the event endpoints and new enhancements.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Track Single Event (Test Defaults)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"sess_54321\",\n  \"channel\": \"WEB\",\n  \"feature\": \"dashboard\",\n  \"metadata\": {\n    \"device\": \"desktop\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "events"]
+            }
+          }
+        },
+        {
+          "name": "Track Single Event (Invalid Channel Validation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"sess_98765\",\n  \"channel\": \"UNKNOWN_CHANNEL\",\n  \"feature\": \"login\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "events"]
+            }
+          }
+        },
+        {
+          "name": "Track Batch Events (Test Tenant Override)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": [\n    {\n      \"sessionId\": \"sess_batch_1\",\n      \"channel\": \"MOBILE\",\n      \"feature\": \"settings\",\n      \"tenantId\": \"malicious_tenant_id_override_attempt\",\n      \"eventType\": \"click\"\n    },\n    {\n      \"sessionId\": \"sess_batch_2\",\n      \"channel\": \"API\",\n      \"feature\": \"profile\",\n      \"timestamp\": \"2023-01-01T00:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "events", "batch"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWNjMDRmMzYwNDQzNzgwZTYyZGZiMGMiLCJ0ZW5hbnRJZCI6IjY1YjkwZjQyMWU0MmE5YjI0NDRkZTM0MCIsInJvbGUiOiJWSUVXRVIiLCJpYXQiOjE3NzQ5ODE4NDYsImV4cCI6MTc3NTA2ODI0Nn0.OK8DpaLEK8hmwOyOTLqaqQyoLpW5bamRFmQ3IIHHR0Q"
+    }
+  ]
+}
