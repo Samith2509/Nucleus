@@ -1,102 +1,290 @@
 {
   "info": {
-    "name": "Finsight API - Events Testing",
-    "description": "API collection for testing the event endpoints and new enhancements.",
+    "name": "Finsight Backend API V2",
+    "description": "API collection for all endpoints, including new advanced Analytics and Event tracking.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
   "item": [
     {
-      "name": "Events",
+      "name": "Health",
       "item": [
         {
-          "name": "Track Single Event (Test Defaults)",
+          "name": "Health Check",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"sessionId\": \"sess_54321\",\n  \"channel\": \"WEB\",\n  \"feature\": \"dashboard\",\n  \"metadata\": {\n    \"device\": \"desktop\"\n  }\n}"
-            },
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/events",
+              "raw": "{{baseUrl}}/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "events"]
-            }
-          }
-        },
-        {
-          "name": "Track Single Event (Invalid Channel Validation)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"sessionId\": \"sess_98765\",\n  \"channel\": \"UNKNOWN_CHANNEL\",\n  \"feature\": \"login\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/events",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "events"]
-            }
-          }
-        },
-        {
-          "name": "Track Batch Events (Test Tenant Override)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"events\": [\n    {\n      \"sessionId\": \"sess_batch_1\",\n      \"channel\": \"MOBILE\",\n      \"feature\": \"settings\",\n      \"tenantId\": \"malicious_tenant_id_override_attempt\",\n      \"eventType\": \"click\"\n    },\n    {\n      \"sessionId\": \"sess_batch_2\",\n      \"channel\": \"API\",\n      \"feature\": \"profile\",\n      \"timestamp\": \"2023-01-01T00:00:00.000Z\"\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/events/batch",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "events", "batch"]
+              "path": ["health"]
             }
           }
         }
       ]
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:5000"
     },
     {
-      "key": "token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWNjMDRmMzYwNDQzNzgwZTYyZGZiMGMiLCJ0ZW5hbnRJZCI6IjY1YjkwZjQyMWU0MmE5YjI0NDRkZTM0MCIsInJvbGUiOiJWSUVXRVIiLCJpYXQiOjE3NzQ5ODE4NDYsImV4cCI6MTc3NTA2ODI0Nn0.OK8DpaLEK8hmwOyOTLqaqQyoLpW5bamRFmQ3IIHHR0Q"
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Admin\",\n  \"email\": \"admin@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.token) {",
+                  "    pm.collectionVariables.set(\"token\", response.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Track Single Event",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feature\": \"DASHBOARD_VIEW\",\n  \"channel\": \"WEB\",\n  \"eventType\": \"VIEW\",\n  \"metadata\": { \"browser\": \"Chrome\" }\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"]
+            }
+          }
+        },
+        {
+          "name": "Track Batch Events",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": [\n    {\n      \"feature\": \"REPORT_DOWNLOAD\",\n      \"eventType\": \"CLICK\"\n    },\n    {\n      \"feature\": \"SETTINGS_UPDATE\",\n      \"eventType\": \"SUBMIT\"\n    }\n  ]\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "batch"]
+            }
+          }
+        },
+        {
+          "name": "Get Events (Paginated & Filtered)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events?page=1&limit=50&feature=REPORT_DOWNLOAD&channel=WEB",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "50" },
+                { "key": "feature", "value": "REPORT_DOWNLOAD" },
+                { "key": "channel", "value": "WEB" },
+                { "key": "startDate", "value": "2026-01-01", "disabled": true },
+                { "key": "endDate", "value": "2026-12-31", "disabled": true }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Dashboard Summary",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Feature Usage Breakdown",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/feature-usage?startDate=2026-01-01&endDate=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "feature-usage"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01", "disabled": true },
+                { "key": "endDate", "value": "2026-12-31", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Funnel Analytics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/funnel?journeyId=YOUR_JOURNEY_OBJECT_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "funnel"],
+              "query": [
+                { "key": "journeyId", "value": "YOUR_JOURNEY_OBJECT_ID_HERE" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test & Debug",
+      "item": [
+        {
+          "name": "Create Test Event (Tenant Scope)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feature\": \"TEST_FEATURE\",\n  \"channel\": \"API\",\n  \"eventType\": \"SYSTEM_TEST\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/test/tenant",
+              "host": ["{{baseUrl}}"],
+              "path": ["test", "tenant"]
+            }
+          }
+        },
+        {
+          "name": "Get Tests (Tenant Scope)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/test/tenant",
+              "host": ["{{baseUrl}}"],
+              "path": ["test", "tenant"]
+            }
+          }
+        },
+        {
+          "name": "Admin Only Test",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/test/admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["test", "admin"]
+            }
+          }
+        }
+      ]
     }
   ]
 }
