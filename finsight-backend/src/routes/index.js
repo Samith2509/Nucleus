@@ -4,6 +4,10 @@ const authRoutes = require('./authRoutes');
 const testRoutes = require('./testRoutes');
 const eventRoutes = require('./eventRoutes');
 const analyticsRoutes = require('./analyticsRoutes');
+const featureRoutes = require('./featureRoutes');
+const journeyRoutes = require('./journeyRoutes');
+const consentRoutes = require('./consentRoutes');
+const auditRoutes = require('./auditRoutes');
 
 // Health check route
 router.get('/health', (req, res) => {
@@ -21,5 +25,17 @@ router.use('/test', testRoutes);
 
 // Analytics routes
 router.use('/analytics', analyticsRoutes);
+
+// Feature routes
+router.use('/features', featureRoutes);
+
+// Journey routes
+router.use('/journeys', journeyRoutes);
+
+// Consent routes
+router.use('/consent', consentRoutes);
+
+// Audit routes
+router.use('/audit', auditRoutes);
 
 module.exports = router;

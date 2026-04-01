@@ -1,13 +1,13 @@
 {
   "info": {
-    "name": "Finsight Backend API V2",
-    "description": "API collection for all endpoints, including new advanced Analytics and Event tracking.",
+    "name": "Finsight Backend API test",
+    "description": "API collection for Nucleus Finsight Backend",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:5000/api",
+      "value": "http://localhost:5000/api/v1",
       "type": "string"
     },
     {
@@ -18,36 +18,18 @@
   ],
   "item": [
     {
-      "name": "Health",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "Auth",
       "item": [
         {
           "name": "Register User",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Admin\",\n  \"email\": \"admin@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"ADMIN\"\n}",
-              "options": {
-                "raw": { "language": "json" }
-              }
+              "raw": "{\n  \"email\": \"admin@finsight.local\",\n  \"password\": \"securepassword\",\n  \"tenantId\": \"641a2b3c4d5e6f7a8b9c0d1e\",\n  \"role\": \"ADMIN\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
@@ -58,29 +40,14 @@
         },
         {
           "name": "Login User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const response = pm.response.json();",
-                  "if (response.token) {",
-                  "    pm.collectionVariables.set(\"token\", response.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"password123\"\n}",
-              "options": {
-                "raw": { "language": "json" }
-              }
+              "raw": "{\n  \"email\": \"admin@finsight.local\",\n  \"password\": \"securepassword\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
@@ -92,23 +59,177 @@
       ]
     },
     {
+      "name": "Features",
+      "item": [
+        {
+          "name": "Create Feature",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dashboard Analytics\",\n  \"code\": \"dashboard\",\n  \"module\": \"core\",\n  \"description\": \"Main dashboard view\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/features",
+              "host": ["{{baseUrl}}"],
+              "path": ["features"]
+            }
+          }
+        },
+        {
+          "name": "Get Features",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/features",
+              "host": ["{{baseUrl}}"],
+              "path": ["features"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Journeys",
+      "item": [
+        {
+          "name": "Create Journey",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Customer Onboarding\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/journeys",
+              "host": ["{{baseUrl}}"],
+              "path": ["journeys"]
+            }
+          }
+        },
+        {
+          "name": "Add Journey Step",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"journeyId\": \"insert_journey_id_here\",\n  \"stepOrder\": 1,\n  \"stepName\": \"View Dashboard\",\n  \"featureCode\": \"dashboard\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/journeys/step",
+              "host": ["{{baseUrl}}"],
+              "path": ["journeys", "step"]
+            }
+          }
+        },
+        {
+          "name": "Get Journey Steps",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/journeys/:journeyId/steps",
+              "host": ["{{baseUrl}}"],
+              "path": ["journeys", ":journeyId", "steps"],
+              "variable": [
+                {
+                  "key": "journeyId",
+                  "value": "insert_journey_id_here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consent",
+      "item": [
+        {
+          "name": "Set Consent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telemetryEnabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/consent",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent"]
+            }
+          }
+        },
+        {
+          "name": "Get Consent",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/consent",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/audit",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Events",
       "item": [
         {
           "name": "Track Single Event",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
             "method": "POST",
-            "header": [],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"feature\": \"DASHBOARD_VIEW\",\n  \"channel\": \"WEB\",\n  \"eventType\": \"VIEW\",\n  \"metadata\": { \"browser\": \"Chrome\" }\n}",
-              "options": {
-                "raw": { "language": "json" }
-              }
+              "raw": "{\n  \"sessionId\": \"sess_123456\",\n  \"channel\": \"WEB\",\n  \"feature\": \"dashboard\",\n  \"eventType\": \"CLICK\",\n  \"metadata\": { \"button\": \"submit\" }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/events",
@@ -120,18 +241,14 @@
         {
           "name": "Track Batch Events",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
             "method": "POST",
-            "header": [],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"events\": [\n    {\n      \"feature\": \"REPORT_DOWNLOAD\",\n      \"eventType\": \"CLICK\"\n    },\n    {\n      \"feature\": \"SETTINGS_UPDATE\",\n      \"eventType\": \"SUBMIT\"\n    }\n  ]\n}",
-              "options": {
-                "raw": { "language": "json" }
-              }
+              "raw": "{\n  \"events\": [\n    {\n      \"sessionId\": \"sess_123456\",\n      \"channel\": \"WEB\",\n      \"feature\": \"dashboard\",\n      \"eventType\": \"CLICK\"\n    },\n    {\n      \"sessionId\": \"sess_123456\",\n      \"channel\": \"MOBILE\",\n      \"feature\": \"onboarding\",\n      \"eventType\": \"VIEW\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/events/batch",
@@ -141,25 +258,20 @@
           }
         },
         {
-          "name": "Get Events (Paginated & Filtered)",
+          "name": "Get Events (Paginated)",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/events?page=1&limit=50&feature=REPORT_DOWNLOAD&channel=WEB",
+              "raw": "{{baseUrl}}/events?page=1&limit=50&channel=WEB",
               "host": ["{{baseUrl}}"],
               "path": ["events"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "50" },
-                { "key": "feature", "value": "REPORT_DOWNLOAD" },
-                { "key": "channel", "value": "WEB" },
-                { "key": "startDate", "value": "2026-01-01", "disabled": true },
-                { "key": "endDate", "value": "2026-12-31", "disabled": true }
+                { "key": "channel", "value": "WEB" }
               ]
             }
           }
@@ -170,14 +282,12 @@
       "name": "Analytics",
       "item": [
         {
-          "name": "Dashboard Summary",
+          "name": "Get Dashboard Summary",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/analytics/dashboard",
               "host": ["{{baseUrl}}"],
@@ -186,101 +296,37 @@
           }
         },
         {
-          "name": "Feature Usage Breakdown",
+          "name": "Get Feature Usage",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/analytics/feature-usage?startDate=2026-01-01&endDate=2026-12-31",
+              "raw": "{{baseUrl}}/analytics/feature-usage?startDate=2024-01-01",
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "feature-usage"],
               "query": [
-                { "key": "startDate", "value": "2026-01-01", "disabled": true },
-                { "key": "endDate", "value": "2026-12-31", "disabled": true }
+                { "key": "startDate", "value": "2024-01-01" },
+                { "key": "endDate", "value": "2024-12-31", "disabled": true }
               ]
             }
           }
         },
         {
-          "name": "Funnel Analytics",
+          "name": "Get Funnel Analytics",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/analytics/funnel?journeyId=YOUR_JOURNEY_OBJECT_ID_HERE",
+              "raw": "{{baseUrl}}/analytics/funnel?journeyId=insert_journey_id_here",
               "host": ["{{baseUrl}}"],
               "path": ["analytics", "funnel"],
               "query": [
-                { "key": "journeyId", "value": "YOUR_JOURNEY_OBJECT_ID_HERE" }
+                { "key": "journeyId", "value": "insert_journey_id_here" }
               ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Test & Debug",
-      "item": [
-        {
-          "name": "Create Test Event (Tenant Scope)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"feature\": \"TEST_FEATURE\",\n  \"channel\": \"API\",\n  \"eventType\": \"SYSTEM_TEST\"\n}",
-              "options": {
-                "raw": { "language": "json" }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/test/tenant",
-              "host": ["{{baseUrl}}"],
-              "path": ["test", "tenant"]
-            }
-          }
-        },
-        {
-          "name": "Get Tests (Tenant Scope)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/test/tenant",
-              "host": ["{{baseUrl}}"],
-              "path": ["test", "tenant"]
-            }
-          }
-        },
-        {
-          "name": "Admin Only Test",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/test/admin",
-              "host": ["{{baseUrl}}"],
-              "path": ["test", "admin"]
             }
           }
         }

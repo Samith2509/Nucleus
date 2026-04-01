@@ -75,6 +75,7 @@ exports.getFeatureUsage = async (req, res) => {
 
     return res.status(200).json({
         success: true,
+        message: 'Feature usage retrieved successfully',
         data: featureUsage
     });
 
@@ -159,6 +160,7 @@ exports.getFunnelAnalytics = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: 'Funnel analytics retrieved successfully',
       data: funnelSteps
     });
 
@@ -218,6 +220,7 @@ exports.getDashboardSummary = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: 'Dashboard summary retrieved successfully',
       data: summary
     });
 

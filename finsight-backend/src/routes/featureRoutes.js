@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { createFeature, getFeatures } = require('../controllers/featureController');
+const { protect } = require('../middleware/authMiddleware');
+const { requireRole } = require('../middleware/roleMiddleware');
+
+// POST / -> createFeature (Only ADMIN)
+router.post('/', protect, requireRole(['ADMIN']), createFeature);
+
+// GET / -> getFeatures (Read-only access for ADMIN, ANALYST, VIEWER)
+router.get('/', protect, requireRole(['ADMIN', 'ANALYST', 'VIEWER']), getFeatures);
+
+module.exports = router;

@@ -10,7 +10,7 @@ exports.registerUser = async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
     // Create user object
@@ -28,9 +28,9 @@ exports.registerUser = async (req, res) => {
     const userResponse = user.toObject();
     delete userResponse.password;
 
-    res.status(201).json(userResponse);
+    res.status(201).json({ success: true, message: 'User registered successfully', data: userResponse });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
   }
 };
 
@@ -42,13 +42,13 @@ exports.loginUser = async (req, res) => {
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     // Compare provided password with hashed password in DB
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     // Generate JWT payload with requested fields
@@ -62,8 +62,8 @@ exports.loginUser = async (req, res) => {
     const token = generateToken(payload);
 
     // Return the token
-    res.status(200).json({ token });
+    res.status(200).json({ success: true, message: 'Login successful', data: { token } });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
   }
 };
