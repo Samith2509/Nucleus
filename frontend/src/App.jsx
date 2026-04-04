@@ -6,6 +6,7 @@ import JourneyAnalyticsPage from './pages/JourneyAnalyticsPage';
 import JourneyBuilderPage from './pages/JourneyBuilderPage';
 import CustomerAnalyticsPage from './pages/CustomerAnalyticsPage';
 import LicenseInsightsPage from './pages/LicenseInsightsPage';
+import PredictionsPage from './pages/PredictionsPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/journey-builder" element={<JourneyBuilderPage />} />
         <Route path="/customers" element={<CustomerAnalyticsPage />} />
         <Route path="/license-insights" element={<LicenseInsightsPage />} />
+        <Route path="/predictions" element={<PredictionsPage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

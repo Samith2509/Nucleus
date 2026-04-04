@@ -21,4 +21,8 @@ router.get('/customers/:tenantId', protect, requireRole(['ADMIN', 'ANALYST']), g
 // License Insights route
 router.get('/license-insights', protect, requireRole(['ADMIN', 'ANALYST']), getLicenseInsights);
 
+// Predictions & Insights route
+const { getPredictions } = require('../controllers/predictionsController');
+router.get('/predictions', protect, requireRole(['ADMIN', 'ANALYST']), getPredictions);
+
 module.exports = router;
