@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: finsight-backend
+    env: node
+    region: oregon
+    plan: free
+    rootDir: finsight-backend
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false   # Set this manually in Render dashboard
+      - key: JWT_SECRET
+        sync: false   # Set this manually in Render dashboard
+      - key: PORT
+        value: 10000  # Render uses port 10000 internally
