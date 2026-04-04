@@ -131,10 +131,10 @@ const SettingsPage = () => {
         </div>
         <div className="p-4 border-t border-gray-100 shrink-0">
           <div className="flex items-center space-x-3 bg-[#F8FAFC] p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-50 shadow-sm">
-            <div className="w-[34px] h-[34px] bg-[#00829B] rounded-full flex items-center justify-center text-white font-semibold text-[13px] shrink-0">AC</div>
+            <div className="w-[34px] h-[34px] bg-[#00829B] rounded-full flex items-center justify-center text-white font-semibold text-[13px] shrink-0">{localStorage.getItem('tenantName')?.substring(0, 2).toUpperCase() || 'AC'}</div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[13px] font-semibold text-gray-900 truncate">Acme Corp</span>
-              <span className="text-[12px] text-[#64748B]">Enterprise</span>
+              <span className="text-[13px] font-semibold text-gray-900 truncate">{localStorage.getItem('tenantName') || 'Acme Corp'}</span>
+              <span className="text-[12px] text-[#64748B]">{localStorage.getItem('tenantPlan') || 'Enterprise'}</span>
             </div>
           </div>
         </div>

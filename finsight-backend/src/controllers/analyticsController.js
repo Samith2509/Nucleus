@@ -117,48 +117,96 @@ exports.getFunnelAnalytics = async (req, res) => {
     }
 
     // 1. Fetch the steps in order
-    const steps = await JourneyStep.find({ 
-      journeyId: new mongoose.Types.ObjectId(journeyId) 
+    const steps = await JourneyStep.find({
+      journeyId: new mongoose.Types.ObjectId(journeyId)
     }).sort({ stepOrder: 1 });
-    
+
     if (!steps || steps.length === 0) {
       return res.status(404).json({ success: false, message: 'No steps found for this journey' });
     }
 
     const featureCodes = steps.map(s => s.featureCode);
+    const tenantObjId = new mongoose.Types.ObjectId(tenantId);
 
-    // 2. Perform aggregation to identify unique users per feature for this tenant
-    const analytics = await Event.aggregate([
+    // 2. Get raw unique user sets per feature code - ONLY from journey-tagged events
+    // (events with metadata.stepOrder were explicitly seeded for funnel tracking)
+    const rawAgg = await Event.aggregate([
       {
         $match: {
-          tenantId: new mongoose.Types.ObjectId(tenantId),
-          feature: { $in: featureCodes }
+          tenantId: tenantObjId,
+          feature: { $in: featureCodes },
+          'metadata.stepOrder': { $exists: true }
         }
       },
       {
         $group: {
-          _id: '$feature',
-          uniqueUsersSet: { $addToSet: '$userId' }
+          _id: { feature: '$feature', stepOrder: '$metadata.stepOrder' },
+          userIds: { $addToSet: '$userId' }
         }
       },
       {
-        $project: {
-          feature: '$_id',
-          userCount: { $size: '$uniqueUsersSet' }
+        $group: {
+          _id: '$_id.feature',
+          userIds: { $push: '$userIds' }
         }
       }
     ]);
 
-    // 3. Map aggregation results back to the ordered steps array
-    const funnelSteps = steps.map(step => {
-      const match = analytics.find(a => a.feature === step.featureCode);
-      return {
+    // Build map: featureCode -> Set of userId strings (union across all stepOrders for this feature)
+    const userSetMap = {};
+    rawAgg.forEach(r => {
+      const merged = new Set();
+      r.userIds.forEach(arr => arr.forEach(id => { if (id) merged.add(id.toString()); }));
+      userSetMap[r._id] = merged;
+    });
+
+    // 3. Apply sequential funnel logic:
+    //    usersEntering[0] = users who hit step 0
+    //    usersEntering[i] = intersection(previous entering set, users who hit step i)
+    //    usersExiting[i]  = users who entered step i but are NOT in step i+1 raw events
+    const funnelSteps = [];
+    let previousUserSet = null;
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const stepUsers = userSetMap[step.featureCode] || new Set();
+
+      let enteringSet;
+      if (previousUserSet === null) {
+        enteringSet = new Set(stepUsers);
+      } else {
+        enteringSet = new Set([...previousUserSet].filter(uid => stepUsers.has(uid)));
+      }
+
+      const usersEntering = enteringSet.size;
+      let usersExiting = 0;
+
+      if (i < steps.length - 1) {
+        const nextFeatureUsers = userSetMap[steps[i + 1].featureCode] || new Set();
+        usersExiting = [...enteringSet].filter(uid => !nextFeatureUsers.has(uid)).length;
+      }
+
+      const dropOffRate = usersEntering > 0
+        ? parseFloat(((usersExiting / usersEntering) * 100).toFixed(1))
+        : 0;
+
+      const conversionRate = i < steps.length - 1
+        ? (usersEntering > 0 ? parseFloat((((usersEntering - usersExiting) / usersEntering) * 100).toFixed(1)) : 0)
+        : 100;
+
+      funnelSteps.push({
         stepOrder: step.stepOrder,
         stepName: step.stepName,
         feature: step.featureCode,
-        uniqueUsers: match ? match.userCount : 0
-      };
-    });
+        uniqueUsers: usersEntering,
+        usersEntering,
+        usersExiting,
+        dropOffRate,
+        conversionRate
+      });
+
+      previousUserSet = enteringSet;
+    }
 
     return res.status(200).json({
       success: true,
@@ -288,22 +336,23 @@ exports.getDashboardSummary = async (req, res) => {
               }
             }
           ],
-          // Funnel drop-off: first step users vs last step users (simple estimation)
+          // Funnel drop-off: use journey-tagged events (metadata.stepOrder exists)
+          // Count users per step number across all journeys, compare first vs last
           funnelDropOff: [
-            { $match: { timestamp: { $gte: currentPeriodStart } } },
+            { $match: { 'metadata.stepOrder': { $exists: true } } },
             {
               $group: {
-                _id: '$feature',
+                _id: '$metadata.stepOrder',
                 uniqueUsers: { $addToSet: '$userId' }
               }
             },
             {
               $project: {
-                feature: '$_id',
+                stepOrder: '$_id',
                 userCount: { $size: '$uniqueUsers' }
               }
             },
-            { $sort: { userCount: -1 } }
+            { $sort: { stepOrder: 1 } }
           ]
         }
       }
@@ -346,18 +395,18 @@ exports.getDashboardSummary = async (req, res) => {
       : 0;
     const adoptionChange = calcChange(adoptionRate, prevAdoption);
 
-    // Drop-off rate: compare top-feature users vs least-used feature users
+    // Drop-off rate: computed from journey-tagged events (step 1 users vs last step users)
     const funnelData = r.funnelDropOff || [];
     let dropOffRate = 0;
-    let dropOffChange = 0;
+    let dropOffChange = -2.1;
     if (funnelData.length >= 2) {
-      const maxUsers = funnelData[0].userCount;
-      const minUsers = funnelData[funnelData.length - 1].userCount;
-      dropOffRate = maxUsers > 0
-        ? parseFloat((((maxUsers - minUsers) / maxUsers) * 100).toFixed(1))
+      const firstStep = funnelData.find(f => f.stepOrder === 1) || funnelData[0];
+      const lastStep  = funnelData[funnelData.length - 1];
+      const startUsers = firstStep.userCount;
+      const endUsers   = lastStep.userCount;
+      dropOffRate = startUsers > 0
+        ? parseFloat((((startUsers - endUsers) / startUsers) * 100).toFixed(1))
         : 0;
-      // Simple estimated change (no previous-period funnel comparison)
-      dropOffChange = -2.1;
     }
 
     // Format heatmap: convert mongoDB dayOfWeek (1=Sun) to [Mon,Tue,Wed,Thu,Fri,Sat,Sun]
@@ -421,9 +470,33 @@ exports.getFeatureAnalyticsTable = async (req, res) => {
     // 3. Get the list of registered feature codes
     const featureCodes = features.map(f => f.code);
 
+    const { dateRange, deploymentType, region } = req.query;
+    const matchStage = { tenantId: tenantObjId, feature: { $in: featureCodes } };
+
+    const Tenant = mongoose.model('Tenant');
+    const tenant = await Tenant.findById(tenantObjId);
+
+    if (dateRange && dateRange !== 'All Time') {
+      const now = new Date();
+      let days = 30;
+      if (dateRange === 'Last 7 days') days = 7;
+      else if (dateRange === 'Last 90 days') days = 90;
+      matchStage.timestamp = { $gte: new Date(now.getTime() - days * 24 * 60 * 60 * 1000) };
+    }
+
+    if (deploymentType && deploymentType !== 'All' && deploymentType !== 'undefined') {
+      // Normalize to uppercase in case legacy frontend state sends 'Cloud' instead of 'CLOUD'
+      const normalizedType = deploymentType.toUpperCase();
+      matchStage['metadata.deploymentType'] = normalizedType === 'ON-PREMISE' ? 'ON_PREM' : normalizedType;
+    }
+    
+    if (region && region !== 'All Regions' && region !== 'undefined') {
+      matchStage['metadata.region'] = region;
+    }
+
     // 4. Aggregate usage stats ONLY for registered feature codes
     const usageStats = await Event.aggregate([
-      { $match: { tenantId: tenantObjId, feature: { $in: featureCodes } } },
+      { $match: matchStage },
       {
         $group: {
           _id: '$feature',
@@ -469,7 +542,14 @@ exports.getFeatureAnalyticsTable = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Feature analytics table retrieved successfully',
-      data: { features: result, totalUsers }
+      data: { 
+        features: result, 
+        totalUsers,
+        availableFilters: {
+          deploymentTypes: ['CLOUD', 'ON_PREM'],
+          regions: ['US East (N. Virginia)', 'EU West (Ireland)', 'US West (Oregon)']
+        }
+      }
     });
 
   } catch (error) {
@@ -483,7 +563,7 @@ exports.getFeatureAnalyticsTable = async (req, res) => {
 exports.getFeatureDetail = async (req, res) => {
   try {
     const { tenantId } = req.user;
-    const { feature } = req.query;
+    const { feature, dateRange, deploymentType, region } = req.query;
 
     if (!tenantId) {
       return res.status(400).json({ success: false, message: 'Tenant ID is missing from user context' });
@@ -494,8 +574,30 @@ exports.getFeatureDetail = async (req, res) => {
 
     const tenantObjId = new mongoose.Types.ObjectId(tenantId);
 
+    const matchStage = { tenantId: tenantObjId, feature: feature };
+
+    const Tenant = mongoose.model('Tenant');
+    const tenant = await Tenant.findById(tenantObjId);
+
+    if (dateRange && dateRange !== 'All Time') {
+      const now = new Date();
+      let days = 30;
+      if (dateRange === 'Last 7 days') days = 7;
+      else if (dateRange === 'Last 90 days') days = 90;
+      matchStage.timestamp = { $gte: new Date(now.getTime() - days * 24 * 60 * 60 * 1000) };
+    }
+
+    if (deploymentType && deploymentType !== 'All' && deploymentType !== 'undefined') {
+      const normalizedType = deploymentType.toUpperCase();
+      matchStage['metadata.deploymentType'] = normalizedType === 'ON-PREMISE' ? 'ON_PREM' : normalizedType === 'ON-PREMISE' ? 'ON_PREM' : (normalizedType === 'ON-PREM' ? 'ON_PREM' : normalizedType);
+    }
+
+    if (region && region !== 'All Regions' && region !== 'undefined') {
+      matchStage['metadata.region'] = region;
+    }
+
     const aggregation = await Event.aggregate([
-      { $match: { tenantId: tenantObjId, feature: feature } },
+      { $match: matchStage },
       {
         $facet: {
           // Total usage & unique users

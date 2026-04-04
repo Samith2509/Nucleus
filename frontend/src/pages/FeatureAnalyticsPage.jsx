@@ -15,6 +15,7 @@ const FeatureAnalyticsPage = () => {
   const navigate = useNavigate();
   const [features, setFeatures] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [availableFilters, setAvailableFilters] = useState({ deploymentTypes: ['CLOUD', 'ON_PREM'], regions: ['US East', 'Europe'] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -22,6 +23,12 @@ const FeatureAnalyticsPage = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // Filters state
+  const [dateRange, setDateRange] = useState('Last 30 days');
+  const [deploymentType, setDeploymentType] = useState('All');
+  const [region, setRegion] = useState('All Regions');
+  const detailPanelRef = useRef(null);
 
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -31,7 +38,8 @@ const FeatureAnalyticsPage = () => {
     setDetail(null);
     setDetailLoading(true);
     try {
-      const res = await fetch(`/api/v1/analytics/feature-detail?feature=${encodeURIComponent(featureCode)}`, { headers });
+      const queryParams = new URLSearchParams({ feature: featureCode, dateRange, deploymentType, region }).toString();
+      const res = await fetch(`/api/v1/analytics/feature-detail?${queryParams}`, { headers });
       const json = await res.json();
       if (json.success) {
         setDetail(json.data);
@@ -47,13 +55,18 @@ const FeatureAnalyticsPage = () => {
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
     const fetchTable = async () => {
+      setLoading(true);
       try {
-        const res = await fetch('/api/v1/analytics/feature-analytics', { headers });
+        const queryParams = new URLSearchParams({ dateRange, deploymentType, region }).toString();
+        const res = await fetch(`/api/v1/analytics/feature-analytics?${queryParams}`, { headers });
         if (res.status === 401 || res.status === 403) { navigate('/login'); return; }
         const json = await res.json();
         if (json.success) {
           setFeatures(json.data.features);
           setTotalUsers(json.data.totalUsers);
+          if (json.data.availableFilters) {
+            setAvailableFilters(json.data.availableFilters);
+          }
           // Auto-load detail for the first feature
           if (json.data.features.length > 0) {
             const first = json.data.features[0];
@@ -70,13 +83,16 @@ const FeatureAnalyticsPage = () => {
       }
     };
     fetchTable();
-  }, [navigate]);
+  }, [navigate, dateRange, deploymentType, region]);
 
   // ── Click handler for View Details ──
   const handleViewDetails = (featureCode) => {
     const feat = features.find(f => f.code === featureCode);
     setSelectedFeature(feat);
     fetchDetail(featureCode);
+    setTimeout(() => {
+      detailPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   // ── Derive SVG chart data ──
@@ -173,7 +189,7 @@ const FeatureAnalyticsPage = () => {
               { name: 'Journey Builder', active: false, href: '/journey-builder', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 22V4c0-1.1.9-2 2-2h8.5L22 7.5V20c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
               { name: 'Privacy & Compliance', href: '/privacy-compliance', active: false, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
               { name: 'Audit Logs', href: '/audit-logs', active: false, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
-              { name: 'Settings', active: false, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> },
+              { name: 'Settings', href: '/settings', active: false, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> },
             ].map((item, idx) => (
               <a key={idx} href={item.href || '#'} onClick={item.href ? (e) => { e.preventDefault(); navigate(item.href); } : undefined} className={`flex items-center space-x-3 px-3 py-2.5 rounded-[10px] text-[14px] font-medium transition-colors ${item.active ? 'bg-[#F0F5FF] text-[#0052cc]' : 'text-[#475569] hover:bg-gray-50 hover:text-gray-900'}`}>
                 <span className={item.active ? 'text-[#0052cc]' : 'text-[#64748B]'}>{item.icon}</span>
@@ -184,10 +200,10 @@ const FeatureAnalyticsPage = () => {
         </div>
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center space-x-3 bg-[#F8FAFC] p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
-            <div className="w-[34px] h-[34px] bg-[#00829B] rounded-full flex items-center justify-center text-white font-semibold text-[13px] shrink-0">AC</div>
+            <div className="w-[34px] h-[34px] bg-[#00829B] rounded-full flex items-center justify-center text-white font-semibold text-[13px] shrink-0">{localStorage.getItem('tenantName')?.substring(0, 2).toUpperCase() || 'AC'}</div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[13px] font-semibold text-gray-900 truncate tracking-tight">Acme Corp</span>
-              <span className="text-[12px] text-[#64748B] tracking-tight">Enterprise</span>
+              <span className="text-[13px] font-semibold text-gray-900 truncate tracking-tight">{localStorage.getItem('tenantName') || 'Acme Corp'}</span>
+              <span className="text-[12px] text-[#64748B] tracking-tight">{localStorage.getItem('tenantPlan') || 'Enterprise'}</span>
             </div>
           </div>
         </div>
@@ -212,29 +228,38 @@ const FeatureAnalyticsPage = () => {
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6 grid grid-cols-3 gap-6">
             <div>
               <label className="block text-[12px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Date Range</label>
-              <select className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#00829B]">
-                <option>Last 30 days</option>
-                <option>Last 7 days</option>
-                <option>Last 90 days</option>
-                <option>All Time</option>
+              <select 
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#00829B]">
+                <option value="Last 30 days">Last 30 days</option>
+                <option value="Last 7 days">Last 7 days</option>
+                <option value="Last 90 days">Last 90 days</option>
+                <option value="All Time">All Time</option>
               </select>
             </div>
             <div>
               <label className="block text-[12px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Deployment Type</label>
-              <select className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#00829B]">
-                <option>All</option>
-                <option>Cloud</option>
-                <option>On-Premise</option>
+              <select 
+                value={deploymentType}
+                onChange={(e) => setDeploymentType(e.target.value)}
+                className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#00829B]">
+                <option value="All">All</option>
+                {availableFilters.deploymentTypes.map(d => (
+                  <option key={d} value={d}>{d === 'CLOUD' ? 'Cloud' : (d === 'ON_PREM' ? 'On-Premise' : d)}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-[12px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Region</label>
-              <select className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#00829B]">
-                <option>All Regions</option>
-                <option>North America</option>
-                <option>Europe</option>
-                <option>Asia Pacific</option>
-                <option>Latin America</option>
+              <select 
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full bg-[#F8FAFC] border border-gray-200 rounded-lg px-3 py-2 text-[14px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#00829B]">
+                <option value="All Regions">All Regions</option>
+                {availableFilters.regions.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -298,7 +323,7 @@ const FeatureAnalyticsPage = () => {
 
               {/* ──── Feature Detail Panel ──── */}
               {selectedFeature && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+                <div ref={detailPanelRef} className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
                   {/* Header */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex flex-col">
