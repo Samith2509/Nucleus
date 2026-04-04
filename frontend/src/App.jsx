@@ -4,6 +4,8 @@ import DashboardPage from './pages/DashboardPage';
 import FeatureAnalyticsPage from './pages/FeatureAnalyticsPage';
 import JourneyAnalyticsPage from './pages/JourneyAnalyticsPage';
 import JourneyBuilderPage from './pages/JourneyBuilderPage';
+import CustomerAnalyticsPage from './pages/CustomerAnalyticsPage';
+import LicenseInsightsPage from './pages/LicenseInsightsPage';
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
         <Route path="/feature-analytics" element={<FeatureAnalyticsPage />} />
         <Route path="/journey-analytics" element={<JourneyAnalyticsPage />} />
         <Route path="/journey-builder" element={<JourneyBuilderPage />} />
+        <Route path="/customers" element={<CustomerAnalyticsPage />} />
+        <Route path="/license-insights" element={<LicenseInsightsPage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
