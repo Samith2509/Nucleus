@@ -31,7 +31,7 @@ const DashboardPage = () => {
         const token = localStorage.getItem('token');
         if (!token) { navigate('/login'); return; }
 
-        const res = await fetch('/api/v1/analytics/dashboard', {
+        const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/dashboard', {
           headers: { Authorization: `Bearer ${token}` }
         });
 

@@ -24,7 +24,7 @@ const FeatureConfigurationPage = () => {
       const token = localStorage.getItem('token');
       if (!token) { navigate('/login'); return; }
       
-      const res = await fetch('/api/v1/features?includeInactive=true', {
+      const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/features?includeInactive=true', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -51,7 +51,7 @@ const FeatureConfigurationPage = () => {
   const handleToggleStatus = async (id, currentStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/v1/features/${id}`, {
+      const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/features/${id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ const FeatureConfigurationPage = () => {
     if (!window.confirm('Are you sure you want to delete this feature?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/v1/features/${id}`, {
+      const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/features/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

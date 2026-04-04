@@ -18,7 +18,7 @@ const LoginPage = () => {
 
     try {
       // Implement the actual API call
-      const response = await fetch('/api/v1/auth/login', {
+      const response = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

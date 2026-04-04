@@ -25,7 +25,7 @@ const JourneyBuilderPage = () => {
         const token = localStorage.getItem('token');
         if (!token) { navigate('/login'); return; }
 
-        const res = await fetch('/api/v1/features', {
+        const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/features', {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -78,7 +78,7 @@ const JourneyBuilderPage = () => {
       const token = localStorage.getItem('token');
       
       // 1. Create Journey
-      const journeyRes = await fetch('/api/v1/journeys', {
+      const journeyRes = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/journeys', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ const JourneyBuilderPage = () => {
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         if (step.stepName && step.featureCode) {
-          await fetch('/api/v1/journeys/step', {
+          await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/journeys/step', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',

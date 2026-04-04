@@ -16,7 +16,7 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/signup', {
+      const response = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

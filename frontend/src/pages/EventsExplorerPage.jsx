@@ -21,7 +21,7 @@ const EventsExplorerPage = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const res = await fetch('/api/v1/events/filters', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/events/filters', { headers: { Authorization: `Bearer ${token}` } });
         const json = await res.json();
         if (json.success) setFilterOptions(json.data);
       } catch (err) {}
@@ -86,7 +86,7 @@ const EventsExplorerPage = () => {
       }
 
       // API call to eventController -> router.get('/') which maps to /api/v1/events
-      const res = await fetch(`/api/v1/events?${params.toString()}`, {
+      const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/events?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

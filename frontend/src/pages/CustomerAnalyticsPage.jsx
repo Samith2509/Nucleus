@@ -133,7 +133,7 @@ const CustomerDetailModal = ({ tenantId, onClose }) => {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const res = await fetch(`/api/v1/analytics/customers/${tenantId}`, {
+        const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/customers/${tenantId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         const json = await res.json();
@@ -257,7 +257,7 @@ const CustomerAnalyticsPage = () => {
         if (planFilter && planFilter !== 'All Plans') query.append('plan', planFilter);
         if (deployFilter && deployFilter !== 'All') query.append('deploymentType', deployFilter);
 
-        const res = await fetch(`/api/v1/analytics/customers?${query.toString()}`, {
+        const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/customers?${query.toString()}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

@@ -32,9 +32,9 @@ const AuditLogsPage = () => {
       if (dateRange && dateRange !== 'All Time') params.append('dateRange', dateRange);
 
       const [logsRes, filtersRes, kpisRes] = await Promise.all([
-        fetch(`/api/v1/audit?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/v1/audit/filters', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/v1/audit/kpis', { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/audit?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/audit/filters', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/audit/kpis', { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       if (logsRes.status === 401) { navigate('/login'); return; }

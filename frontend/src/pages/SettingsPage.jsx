@@ -34,7 +34,7 @@ const SettingsPage = () => {
 
       if (!endpoint) return;
 
-      const res = await fetch(`/api/v1/settings/${endpoint}`, {
+      const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/settings/${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 401) { navigate('/login'); return; }
@@ -66,7 +66,7 @@ const SettingsPage = () => {
       else if (activeTab === 'Integrations') { endpoint = 'integrations'; payload = integrations; }
       else { setSaving(false); return; } // Deployment and Team saving handled differently/not needed
 
-      const res = await fetch(`/api/v1/settings/${endpoint}`, {
+      const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/settings/${endpoint}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -84,7 +84,7 @@ const SettingsPage = () => {
     if (!confirm) return;
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/v1/settings/team/${userId}`, {
+      await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/settings/team/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

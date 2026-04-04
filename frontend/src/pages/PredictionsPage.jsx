@@ -153,7 +153,7 @@ const PredictionsPage = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) { navigate('/login'); return; }
-        const res = await fetch('/api/v1/analytics/predictions', {
+        const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/predictions', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.status === 401 || res.status === 403) { navigate('/login'); return; }

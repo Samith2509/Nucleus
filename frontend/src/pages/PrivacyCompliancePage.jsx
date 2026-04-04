@@ -35,7 +35,7 @@ const PrivacyCompliancePage = () => {
       const token = localStorage.getItem('token');
       if (!token) return navigate('/login');
       
-      const res = await fetch('/api/v1/consent', {
+      const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/consent', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 401 || res.status === 403) return navigate('/login');
@@ -62,7 +62,7 @@ const PrivacyCompliancePage = () => {
     setMsg('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/v1/consent', {
+      const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(settings)

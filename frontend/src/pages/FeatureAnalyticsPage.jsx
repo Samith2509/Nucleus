@@ -39,7 +39,7 @@ const FeatureAnalyticsPage = () => {
     setDetailLoading(true);
     try {
       const queryParams = new URLSearchParams({ feature: featureCode, dateRange, deploymentType, region }).toString();
-      const res = await fetch(`/api/v1/analytics/feature-detail?${queryParams}`, { headers });
+      const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/feature-detail?${queryParams}`, { headers });
       const json = await res.json();
       if (json.success) {
         setDetail(json.data);
@@ -58,7 +58,7 @@ const FeatureAnalyticsPage = () => {
       setLoading(true);
       try {
         const queryParams = new URLSearchParams({ dateRange, deploymentType, region }).toString();
-        const res = await fetch(`/api/v1/analytics/feature-analytics?${queryParams}`, { headers });
+        const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/feature-analytics?${queryParams}`, { headers });
         if (res.status === 401 || res.status === 403) { navigate('/login'); return; }
         const json = await res.json();
         if (json.success) {

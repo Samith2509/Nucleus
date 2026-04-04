@@ -83,7 +83,7 @@ const LicenseInsightsPage = () => {
         const token = localStorage.getItem('token');
         if (!token) { navigate('/login'); return; }
 
-        const res = await fetch('/api/v1/analytics/license-insights', {
+        const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/license-insights', {
           headers: { Authorization: `Bearer ${token}` }
         });
 

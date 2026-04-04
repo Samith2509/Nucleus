@@ -26,7 +26,7 @@ const JourneyAnalyticsPage = () => {
     if (!token) { navigate('/login'); return; }
     const fetchJourneys = async () => {
       try {
-        const res = await fetch('/api/v1/journeys', { headers });
+        const res = await fetch('https://nucleus-by-sheeroo.onrender.com/api/v1/journeys', { headers });
         if (res.status === 401 || res.status === 403) { navigate('/login'); return; }
         const json = await res.json();
         if (json.success && json.data.length > 0) {
@@ -50,7 +50,7 @@ const JourneyAnalyticsPage = () => {
     const fetchFunnel = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/v1/analytics/funnel?journeyId=${selectedJourneyId}`, { headers });
+        const res = await fetch(`https://nucleus-by-sheeroo.onrender.com/api/v1/analytics/funnel?journeyId=${selectedJourneyId}`, { headers });
         const json = await res.json();
         if (json.success) {
           setFunnelData(json.data);
