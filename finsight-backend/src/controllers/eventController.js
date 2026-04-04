@@ -129,7 +129,7 @@ exports.trackBatchEvents = async (req, res) => {
 exports.getEvents = async (req, res) => {
   try {
     const { tenantId } = req.user;
-    let { page = 1, limit = 50, feature, channel, startDate, endDate } = req.query;
+    let { page = 1, limit = 50, feature, channel, eventType, startDate, endDate } = req.query;
 
     if (!tenantId) {
       return res.status(400).json({ success: false, message: 'Tenant ID is required' });
@@ -146,6 +146,10 @@ exports.getEvents = async (req, res) => {
 
     if (channel) {
       query.channel = channel;
+    }
+
+    if (eventType) {
+      query.eventType = eventType;
     }
 
     if (startDate || endDate) {
@@ -177,6 +181,36 @@ exports.getEvents = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching events:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server Error'
+    });
+  }
+};
+
+exports.getEventFilters = async (req, res) => {
+  try {
+    const { tenantId } = req.user;
+    if (!tenantId) {
+      return res.status(400).json({ success: false, message: 'Tenant ID is required' });
+    }
+
+    const [features, channels, eventTypes] = await Promise.all([
+      Event.distinct('feature', { tenantId }),
+      Event.distinct('channel', { tenantId }),
+      Event.distinct('eventType', { tenantId })
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        features: features.filter(Boolean),
+        channels: channels.filter(Boolean),
+        eventTypes: eventTypes.filter(Boolean)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching event filters:', error);
     return res.status(500).json({
       success: false,
       message: 'Server Error'

@@ -38,4 +38,8 @@ router.use('/consent', consentRoutes);
 // Audit routes
 router.use('/audit', auditRoutes);
 
+// Settings routes
+const settingsRoutes = require('./settingsRoutes');
+router.use('/settings', settingsRoutes);
+
 module.exports = router;

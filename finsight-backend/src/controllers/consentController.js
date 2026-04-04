@@ -3,15 +3,21 @@ const AuditLog = require('../models/AuditLog');
 
 exports.setConsent = async (req, res) => {
   try {
-    const { telemetryEnabled } = req.body;
+    const { telemetryEnabled, anonymizeUserData, gdprComplianceMode, piiMasking, dataRetention } = req.body;
     const tenantId = req.user.tenantId;
 
     // Upsert (create or update) consent for tenant
     const consent = await Consent.findOneAndUpdate(
       { tenantId },
       { 
-        telemetryEnabled, 
-        updatedAt: Date.now() 
+        $set: {
+          telemetryEnabled,
+          anonymizeUserData,
+          gdprComplianceMode,
+          ...(piiMasking && { piiMasking }),
+          ...(dataRetention && { dataRetention }),
+          updatedAt: Date.now()
+        }
       },
       { new: true, upsert: true }
     );
@@ -41,7 +47,11 @@ exports.getConsent = async (req, res) => {
         message: 'Default consent retrieved successfully',
         data: {
           tenantId,
-          telemetryEnabled: true, // Default as per schema
+          telemetryEnabled: true,
+          anonymizeUserData: true,
+          gdprComplianceMode: false,
+          piiMasking: { email: true, phone: true, ip: false, fullName: false, physicalAddress: true },
+          dataRetention: { eventData: '90 days', aggregatedAnalytics: '2 years', auditLogs: '7 years' }
         }
       });
     }

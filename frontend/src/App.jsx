@@ -7,6 +7,11 @@ import JourneyBuilderPage from './pages/JourneyBuilderPage';
 import CustomerAnalyticsPage from './pages/CustomerAnalyticsPage';
 import LicenseInsightsPage from './pages/LicenseInsightsPage';
 import PredictionsPage from './pages/PredictionsPage';
+import EventsExplorerPage from './pages/EventsExplorerPage';
+import FeatureConfigurationPage from './pages/FeatureConfigurationPage';
+import AuditLogsPage from './pages/AuditLogsPage';
+import SettingsPage from './pages/SettingsPage';
+import PrivacyCompliancePage from './pages/PrivacyCompliancePage';
 
 function App() {
   return (
@@ -20,6 +25,11 @@ function App() {
         <Route path="/customers" element={<CustomerAnalyticsPage />} />
         <Route path="/license-insights" element={<LicenseInsightsPage />} />
         <Route path="/predictions" element={<PredictionsPage />} />
+        <Route path="/events-explorer" element={<EventsExplorerPage />} />
+        <Route path="/feature-configuration" element={<FeatureConfigurationPage />} />
+        <Route path="/audit-logs" element={<AuditLogsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/privacy-compliance" element={<PrivacyCompliancePage />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

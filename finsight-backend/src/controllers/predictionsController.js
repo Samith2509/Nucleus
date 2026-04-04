@@ -86,10 +86,11 @@ exports.getPredictions = async (req, res) => {
     const churnLevel = churnRisk >= 25 ? 'High' : churnRisk >= 10 ? 'Medium' : 'Low';
 
     // ── 4. REVENUE IMPACT (heuristic: adoption * user count * avg revenue per feature) ──────
-    const activeUsers = await User.countDocuments({ active: true });
-    const usedFeaturesCount = await Event.distinct('feature').then(f => f.length);
+    const totalUsers = await User.countDocuments({});
+    const wellAdoptedFeatures = await Event.distinct('feature');
+    const usedFeaturesCount = wellAdoptedFeatures.length;
     // Base revenue: each active usage of a feature is valued at $20/month
-    const projectedUsageRevenue = usedFeaturesCount * activeUsers * 25;
+    const projectedUsageRevenue = usedFeaturesCount * totalUsers * 25;
     // Round to nearest 5k
     const revenueImpact = Math.round(projectedUsageRevenue / 5000) * 5000;
     const revenueLevel = revenueImpact >= 250000 ? 'Positive' : 'Stable';
@@ -98,23 +99,40 @@ exports.getPredictions = async (req, res) => {
     const allFeatures = await Feature.find({}).lean();
     const featureForecast = [];
 
+    // Optimize user count query
+    const totalUserCount = await User.countDocuments({});
+
     for (const f of allFeatures.slice(0, 6)) {
+      // 1. Better Adoption Calculation: unique users who used this feature vs total users
+      const uniqueUsersFeature = await Event.distinct('userId', { feature: f.code });
+      const uniqueCount = uniqueUsersFeature.length;
+      
+      const adoptionPct = totalUserCount > 0 
+        ? Math.min(100, Math.round((uniqueCount / totalUserCount) * 100))
+        : 0;
+
+      // 2. Clearer Trend: compare Last 30 Days to Previous 30 Days (rather than month - 1 vs month - 3)
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
       const recentCount = await Event.countDocuments({
         feature: f.code,
-        timestamp: { $gte: startOfMonth(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
-                     $lte: endOfMonth(new Date(now.getFullYear(), now.getMonth() - 1, 1)) }
+        timestamp: { $gte: thirtyDaysAgo }
       });
       const prevCount = await Event.countDocuments({
         feature: f.code,
-        timestamp: { $gte: startOfMonth(new Date(now.getFullYear(), now.getMonth() - 3, 1)),
-                     $lte: endOfMonth(new Date(now.getFullYear(), now.getMonth() - 3, 1)) }
+        timestamp: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
       });
-      const totalEvents = await Event.countDocuments({ feature: f.code });
-      const maxPossible = Math.max(totalEvents, 1);
-      const adoptionPct = Math.min(100, Math.round((recentCount / Math.max(maxPossible / 3, 1)) * 100));
-      const trendPct = prevCount > 0
-        ? parseFloat((((recentCount - prevCount) / prevCount) * 100).toFixed(1))
-        : (recentCount > 0 ? 100 : 0);
+
+      let trendPct = 0;
+      if (prevCount > 0) {
+        trendPct = parseFloat((((recentCount - prevCount) / prevCount) * 100).toFixed(1));
+      } else if (recentCount > 0) {
+        // If it went from 0 to something, it's technically infinite growth, but let's cap it or just show 100.
+        // For dummy data realism, let's calculate a modest "initial trend" based on the raw count 
+        // to avoid everything just saying +100%.
+        trendPct = Math.min(100, recentCount * 5); 
+      }
 
       featureForecast.push({
         name: f.name,
@@ -155,30 +173,93 @@ exports.getPredictions = async (req, res) => {
 
     // ── 7. AI INSIGHTS ───────────────────────────────────────────────────────
     const insights = [];
-    const topFeature = featureForecast.sort((a, b) => b.trendPct - a.trendPct)[0];
-    if (topFeature && topFeature.trendPct > 0) {
+    const sortedByTrend = [...featureForecast].sort((a, b) => b.trendPct - a.trendPct);
+    const topFeature = sortedByTrend[0];
+    const decliningFeature = sortedByTrend.find(f => f.trendPct < 0) || sortedByTrend[sortedByTrend.length - 1];
+
+    // Insight 1: Growth (always show — positive or informational)
+    if (topFeature) {
+      if (topFeature.trendPct > 0) {
+        insights.push({
+          type: 'Growth',
+          title: 'High Growth Potential',
+          desc: `${topFeature.name} feature showing ${topFeature.trendPct}% MoM growth. Consider expanding capabilities to capitalize on momentum.`,
+          color: 'green'
+        });
+      } else {
+        insights.push({
+          type: 'Opportunity',
+          title: 'Feature Adoption Opportunity',
+          desc: `${topFeature.name} has the highest adoption at ${topFeature.adoptionPct}%. Promote to lower-engagement customers to drive usage.`,
+          color: 'green'
+        });
+      }
+    } else {
       insights.push({
         type: 'Growth',
-        title: 'High Growth Potential',
-        desc: `${topFeature.name} feature showing ${topFeature.trendPct}% MoM growth. Consider expanding payment options.`,
+        title: 'Stable Platform Usage',
+        desc: `Platform usage is consistent. Focus on onboarding campaigns to drive incremental growth.`,
         color: 'green'
       });
     }
-    const decliningFeature = featureForecast.find(f => f.trendPct < 0);
-    if (decliningFeature) {
+
+    // Insight 2: Churn Risk / Health warning (always show)
+    const highRiskCount = customerHealth.filter(c => c.risk === 'High Risk').length;
+    const medRiskCount  = customerHealth.filter(c => c.risk === 'Medium Risk').length;
+    if (highRiskCount > 0) {
+      const names = customerHealth.filter(c => c.risk === 'High Risk').map(c => c.name).slice(0, 2).join(' and ');
       insights.push({
         type: 'Risk',
         title: 'Churn Risk Detected',
-        desc: `${decliningFeature.name} usage dropped ${Math.abs(decliningFeature.trendPct)}% this cycle. Schedule check-in with affected customers.`,
+        desc: `${highRiskCount} customer(s) including ${names} show declining engagement. Schedule immediate check-ins.`,
         color: 'red'
       });
+    } else if (medRiskCount > 0) {
+      const names = customerHealth.filter(c => c.risk === 'Medium Risk').map(c => c.name).slice(0, 2).join(' and ');
+      insights.push({
+        type: 'Risk',
+        title: 'Engagement Decline Warning',
+        desc: `${medRiskCount} customer(s) including ${names} show a slight usage decline. Proactive outreach is recommended.`,
+        color: 'red'
+      });
+    } else if (decliningFeature && decliningFeature.trendPct < 0) {
+      insights.push({
+        type: 'Risk',
+        title: 'Feature Usage Drop',
+        desc: `${decliningFeature.name} usage dropped ${Math.abs(decliningFeature.trendPct)}% this cycle. Investigate root cause and engage affected users.`,
+        color: 'red'
+      });
+    } else {
+      insights.push({
+        type: 'Info',
+        title: 'Customer Health is Strong',
+        desc: `All customers show healthy engagement levels. Continue current success programs to maintain momentum.`,
+        color: 'blue'
+      });
     }
-    const unusedFeatureCount = allFeatures.length - wellAdoptedFeatures.length;
+
+    // Insight 3: Cross-sell / adoption opportunity (always show)
+    const unusedFeatureCount = allFeatures.length - usedFeaturesCount;
+    const lowAdoptionFeatures = featureForecast.filter(f => f.adoptionPct < 50);
     if (unusedFeatureCount > 0) {
       insights.push({
         type: 'Opportunity',
-        title: 'Cross Sell Opportunity',
-        desc: `${unusedFeatureCount} licensed features remain unused. Target customers with educational content.`,
+        title: 'Cross-Sell Opportunity',
+        desc: `${unusedFeatureCount} licensed feature(s) remain unused. Target customers with guided tutorials and in-app prompts.`,
+        color: 'blue'
+      });
+    } else if (lowAdoptionFeatures.length > 0) {
+      insights.push({
+        type: 'Opportunity',
+        title: 'Adoption Improvement Potential',
+        desc: `${lowAdoptionFeatures.length} feature(s) have below 50% adoption. A targeted onboarding campaign could significantly boost engagement.`,
+        color: 'blue'
+      });
+    } else {
+      insights.push({
+        type: 'Opportunity',
+        title: 'Upsell Window Open',
+        desc: `Strong feature adoption across the board signals readiness for premium tier upsell. Consider proactive pricing conversations.`,
         color: 'blue'
       });
     }

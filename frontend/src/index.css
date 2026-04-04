@@ -7,5 +7,16 @@
 @layer base {
   body {
     @apply antialiased text-gray-900 bg-[#F4F7FB];
+    transition: filter 0.3s ease, background-color 0.3s ease;
+  }
+  
+  html.dark-mode {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  html.dark-mode img,
+  html.dark-mode svg,
+  html.dark-mode .keep-colors {
+    filter: invert(1) hue-rotate(180deg);
   }
 }
