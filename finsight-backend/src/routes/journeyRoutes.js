@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { createJourney, addJourneyStep, getJourneySteps } = require('../controllers/journeyController');
+const { createJourney, addJourneyStep, getJourneySteps, getJourneys } = require('../controllers/journeyController');
 const { protect } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
+
+// GET / -> getJourneys (Read-only access)
+router.get('/', protect, requireRole(['ADMIN', 'ANALYST', 'VIEWER']), getJourneys);
 
 // POST / -> createJourney (Only ADMIN)
 router.post('/', protect, requireRole(['ADMIN']), createJourney);

@@ -2,13 +2,24 @@ const Journey = require('../models/Journey');
 const JourneyStep = require('../models/JourneyStep');
 const AuditLog = require('../models/AuditLog');
 
+exports.getJourneys = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const journeys = await Journey.find({ tenantId });
+    res.status(200).json({ success: true, message: 'Journeys retrieved successfully', data: journeys });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.createJourney = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, type } = req.body;
     const tenantId = req.user.tenantId;
 
     const newJourney = new Journey({
       name,
+      type,
       tenantId
     });
 

@@ -10,6 +10,11 @@ const journeySchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  type: {
+    type: String,
+    enum: ['Onboarding', 'Conversion', 'Retention', 'Other'],
+    default: 'Onboarding'
+  },
   createdAt: {
     type: Date,
     default: Date.now
